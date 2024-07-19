@@ -120,3 +120,15 @@ app.post("/signup", (req, res) => {  // 데이터 받아서 결과 전송
 app.listen(port, () => {
     console.log(`Example app listening at http://localhost:${port}`)
 })
+
+// 게시글 목록을 가져오는 API
+app.get('/posts', (req, res) => {
+    const query = 'SELECT * FROM postInfo';
+    db.query(query, (err, results) => {
+      if (err) {
+        res.status(500).json({ error: 'Database query failed' });
+        return;
+      }
+      res.json(results);
+    });
+  });

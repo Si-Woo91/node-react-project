@@ -1,6 +1,7 @@
 import './App.css';
 import { useState } from 'react';
 import { useEffect } from 'react';
+import BoardList from './Board'; // Board 컴포넌트를 분리하여 가져옵니다.
 
 function Login(props) {
   const [id, setId] = useState("");
@@ -32,7 +33,7 @@ function Login(props) {
           .then((res) => res.json())
           .then((json) => {            
             if(json.isLogin==="True"){
-              props.setMode("WELCOME");
+              props.setMode("BOARDLIST");
             }
             else {
               alert(json.isLogin)
@@ -107,7 +108,7 @@ function App() {
       .then((res) => res.json())
       .then((json) => {        
         if (json.isLogin === "True") {
-          setMode("WELCOME");
+          setMode("BOARDLIST");
         }
         else {
           setMode("LOGIN");
@@ -123,13 +124,16 @@ function App() {
   else if (mode === 'SIGNUP') {
     content = <Signup setMode={setMode}></Signup> 
   }
-  else if (mode === 'WELCOME') {
-    content = <>
-    <h2>메인 페이지에 오신 것을 환영합니다</h2>
-    <p>로그인에 성공하셨습니다.</p> 
-    <a href="/logout">로그아웃</a>   
-    </>
+  else if (mode === 'BOARDLIST') {
+    content = <BoardList />; 
   }
+
+    // content = <>
+    // <h2>메인 페이지에 오신 것을 환영합니다</h2>
+    // <p>로그인에 성공하셨습니다.</p> 
+    // <a href="/logout">로그아웃</a>   
+    // </>
+  // }
 
   return (
     <>
