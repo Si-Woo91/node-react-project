@@ -1,7 +1,7 @@
 import './App.css';
 import { useState } from 'react';
 import { useEffect } from 'react';
-import BoardList from './Board'; // Board 컴포넌트를 분리하여 가져옵니다.
+import Board from './Board'; // Board 컴포넌트를 분리하여 가져옵니다.
 
 function Login(props) {
   const [id, setId] = useState("");
@@ -33,7 +33,8 @@ function Login(props) {
           .then((res) => res.json())
           .then((json) => {            
             if(json.isLogin==="True"){
-              props.setMode("BOARDLIST");
+              props.setUserId(json.userId);
+              props.setMode("BOARD");
             }
             else {
               alert(json.isLogin)
@@ -50,7 +51,7 @@ function Login(props) {
 
 
 function Signup(props) {
-  const [id, setId] = useState("");
+  const [id, setUserId] = useState("");
   const [password, setPassword] = useState("");
   const [password2, setPassword2] = useState("");
 
@@ -59,7 +60,7 @@ function Signup(props) {
 
     <div className="form">
       <p><input className="login" type="text" placeholder="아이디" onChange={event => {
-        setId(event.target.value);
+        setUserId(event.target.value);
       }} /></p>
       <p><input className="login" type="password" placeholder="비밀번호" onChange={event => {
         setPassword(event.target.value);
@@ -102,38 +103,30 @@ function Signup(props) {
 
 function App() {
   const [mode, setMode] = useState("");
+  const [userId, setUserId] = useState(""); // 로그인한 사용자 ID를 저장할 상태
 
   useEffect(() => {
     fetch("http://localhost:3001/authcheck")
       .then((res) => res.json())
       .then((json) => {        
         if (json.isLogin === "True") {
-          setMode("BOARDLIST");
-        }
-        else {
+          setMode("BOARD");
+          setUserId(json.userId);
+        } else {
           setMode("LOGIN");
         }
       });
-  }, []); 
-
-  let content = null;  
-
-  if(mode==="LOGIN"){
-    content = <Login setMode={setMode}></Login> 
+    }, []); 
+    
+    let content = null;  
+    
+    if (mode === "LOGIN") {
+      content = <Login setMode={setMode} setUserId={setUserId} />;
+    } else if (mode === 'SIGNUP') {
+      content = <Signup setMode={setMode} />;
+    } else if (mode === 'BOARD') {
+    content = <Board setMode={setMode} userId={userId} />; // userId를 Board에 전달
   }
-  else if (mode === 'SIGNUP') {
-    content = <Signup setMode={setMode}></Signup> 
-  }
-  else if (mode === 'BOARDLIST') {
-    content = <BoardList />; 
-  }
-
-    // content = <>
-    // <h2>메인 페이지에 오신 것을 환영합니다</h2>
-    // <p>로그인에 성공하셨습니다.</p> 
-    // <a href="/logout">로그아웃</a>   
-    // </>
-  // }
 
   return (
     <>

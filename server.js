@@ -27,29 +27,34 @@ app.get('/', (req, res) => {
     req.sendFile(path.join(__dirname, '/build/index.html'));
 })
 
+// 로그인 체크
 app.get('/authcheck', (req, res) => {      
-    const sendData = { isLogin: "" };
+    const sendData = { isLogin: "", userId: ""};
     if (req.session.is_logined) {
-        sendData.isLogin = "True"
+        sendData.isLogin = "True";
+        console.log('세션 아이디체크 :', req.session.nickname);
+        sendData.userId = req.session.nickname;
     } else {
-        sendData.isLogin = "False"
+        sendData.isLogin = "False";
     }
-    res.send(sendData);
+    res.json(sendData);
 })
 
+// 로그아웃
 app.get('/logout', function (req, res) {
     req.session.destroy(function (err) {
         res.redirect('/');
     });
 });
 
+// 로그인
 app.post("/login", (req, res) => { // 데이터 받아서 결과 전송
-    const username = req.body.userId;
+    const userId = req.body.userId;
     const password = req.body.userPassword;
-    const sendData = { isLogin: "" };
+    const sendData = { isLogin: "", userId: ""};
 
-    if (username && password) {             // id와 pw가 입력되었는지 확인
-        db.query('SELECT * FROM userTable WHERE username = ?', [username], function (error, results, fields) {
+    if (userId && password) {             // id와 pw가 입력되었는지 확인
+        db.query('SELECT * FROM userTable WHERE username = ?', [userId], function (error, results, fields) {
             if (error) throw error;
             if (results.length > 0) {       // db에서의 반환값이 있다 = 일치하는 아이디가 있다.      
 
@@ -57,39 +62,41 @@ app.post("/login", (req, res) => { // 데이터 받아서 결과 전송
 
                     if (result === true) {                  // 비밀번호가 일치하면
                         req.session.is_logined = true;      // 세션 정보 갱신
-                        req.session.nickname = username;
+                        req.session.nickname = userId;
+
+                        console.log('Session Nickname:', req.session.nickname);
                         req.session.save(function () {
                             sendData.isLogin = "True"
-                            res.send(sendData);
+                            sendData.userId = userId;
+                            res.json(sendData);
                         });
-                        db.query(`INSERT INTO logTable (created, username, action, command, actiondetail) VALUES (NOW(), ?, 'login' , ?, ?)`
-                            , [req.session.nickname, '-', `React 로그인 테스트`], function (error, result) { });
                     }
                     else{                                   // 비밀번호가 다른 경우
                         sendData.isLogin = "로그인 정보가 일치하지 않습니다."
-                        res.send(sendData);
+                        res.json(sendData);
                     }
                 })                      
             } else {    // db에 해당 아이디가 없는 경우
                 sendData.isLogin = "아이디 정보가 일치하지 않습니다."
-                res.send(sendData);
+                res.json(sendData);
             }
         });
     } else {            // 아이디, 비밀번호 중 입력되지 않은 값이 있는 경우
         sendData.isLogin = "아이디와 비밀번호를 입력하세요!"
-        res.send(sendData);
+        res.json(sendData);
     }
 });
 
+// 회원가입
 app.post("/signup", (req, res) => {  // 데이터 받아서 결과 전송
-    const username = req.body.userId;
+    const userId = req.body.userId;
     const password = req.body.userPassword;
     const password2 = req.body.userPassword2;
     
     const sendData = { isSuccess: "" };
 
-    if (username && password && password2) {
-        db.query('SELECT * FROM userTable WHERE username = ?', [username], function(error, results, fields) { // DB에 같은 이름의 회원아이디가 있는지 확인
+    if (userId && password && password2) {
+        db.query('SELECT * FROM userTable WHERE username = ?', [userId], function(error, results, fields) { // DB에 같은 이름의 회원아이디가 있는지 확인
             if (error) throw error;
             if (results.length <= 0 && password == password2) {         // DB에 같은 이름의 회원아이디가 없고, 비밀번호가 올바르게 입력된 경우
                 const hasedPassword = bcrypt.hashSync(password, 10);    // 입력된 비밀번호를 해시한 값
@@ -111,7 +118,7 @@ app.post("/signup", (req, res) => {  // 데이터 받아서 결과 전송
         });        
     } else {
         sendData.isSuccess = "아이디와 비밀번호를 입력하세요!"
-        res.send(sendData);  
+        res.json(sendData);  
     }
     
 });
@@ -121,8 +128,8 @@ app.listen(port, () => {
     console.log(`Example app listening at http://localhost:${port}`)
 })
 
-// 게시글 목록을 가져오는 API
-app.get('/posts', (req, res) => {
+// 게시글 목록
+app.get('/list', (req, res) => {
     const query = 'SELECT * FROM postInfo';
     db.query(query, (err, results) => {
       if (err) {
@@ -132,3 +139,48 @@ app.get('/posts', (req, res) => {
       res.json(results);
     });
   });
+
+// 게시글 작성
+app.post('/write', (req, res) => {
+    const postUserId = req.body.postUserId
+    const postTitle = req.body.postTitle;
+    const postContent = req.body.postContent;
+
+    const sendData = {postSuccess : ""};
+
+    if(postUserId && postTitle && postContent) {
+        
+        const getUserQuery = 'SELECT id FROM userTable WHERE username = ?';
+
+        db.query(getUserQuery, [postUserId], function(error, results) {
+            if(error) {
+                console.error(error);
+                return res.status(500).json({message: 'Database query error.'});
+            }
+
+            if(results.length === 0) {
+                return res.status(404).json({message : 'User not found.'});
+            }
+
+            const userId = results[0].id;
+
+            const query = 'INSERT INTO postInfo(postTitle, postContent, postUserName, postUserId) VALUES(?,?,?,?)';
+
+            db.query(query, [postTitle, postContent, postUserId, userId], function (error, data) {
+                if(error) throw error;
+                req.session.save(function () {
+                    sendData.postSuccess = "True";
+                    res.json(sendData);
+                })
+            })
+        })
+    }
+    else
+    {
+        sendData.postSuccess = "빠진 항목없이 입력해주세요."
+        res.json(sendData);  
+    }
+
+
+
+})
