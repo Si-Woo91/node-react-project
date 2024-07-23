@@ -130,7 +130,7 @@ function App() {
 
   return (
     <>
-      <div className="background">
+      <div className={`${mode === "BOARD" ? "boardBackground" : "background"}`}>
         {content}
       </div>
     </>

@@ -168,10 +168,10 @@ app.post('/write', (req, res) => {
 
             db.query(query, [postTitle, postContent, postUserId, userId], function (error, data) {
                 if(error) throw error;
-                req.session.save(function () {
-                    sendData.postSuccess = "True";
-                    res.json(sendData);
-                })
+                
+                sendData.postSuccess = "True";
+                res.json(sendData);
+                
             })
         })
     }
@@ -180,7 +180,56 @@ app.post('/write', (req, res) => {
         sendData.postSuccess = "빠진 항목없이 입력해주세요."
         res.json(sendData);  
     }
-
-
-
 })
+
+app.get('/:postId', (req, res) => {
+    const postId = parseInt(req.params.postId, 10); // 10은 10진법을 의미
+    const query = 'SELECT * FROM postInfo WHERE id = ?';
+
+    const sendData = {  postId : "",
+                        postTitle : "",
+                        postContent : "",
+                        postUserName : "",
+                        postUserId : ""
+    };
+
+    db.query(query, [postId], function(error, results) {
+
+        if (error) {
+            console.error('Error querying the database:', error);
+            return res.status(500).send('Internal Server Error'); // HTML 응답
+          }
+
+        if(results.length === 0 ){
+            return res.status(400).json({message : 'Post not found.'});
+        }
+        else{
+            sendData.postId = results[0].id
+            sendData.postTitle = results[0].postTitle
+            sendData.postContent = results[0].postContent
+            sendData.postUserName = results[0].postUserName
+            sendData.postUserId = results[0].postUserId
+
+            console.log("sendData ::: ", sendData);
+
+            res.json(sendData);
+        
+        }
+    })
+})
+
+// 게시물 삭제
+app.delete('/:id', (req, res) => {
+    const postId = parseInt(req.params.id, 10);
+    
+    const query = 'DELETE FROM postInfo WHERE id = ?';
+    db.query(query, [postId], (error, results) => {
+      if (error) {
+        return res.status(500).json({ message: 'Error deleting post' });
+      }
+      if (results.affectedRows === 0) {
+        return res.status(404).json({ message: 'Post not found' });
+      }
+      res.status(200).json({ message: 'Post deleted successfully' });
+    });
+  });
