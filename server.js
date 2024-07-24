@@ -182,8 +182,9 @@ app.post('/write', (req, res) => {
     }
 })
 
-app.get('/:postId', (req, res) => {
-    const postId = parseInt(req.params.postId, 10); // 10은 10진법을 의미
+// 게시물 조회
+app.get('/:id', (req, res) => {
+    const postId = parseInt(req.params.id, 10); // 10은 10진법을 의미
     const query = 'SELECT * FROM postInfo WHERE id = ?';
 
     const sendData = {  postId : "",
@@ -220,7 +221,7 @@ app.get('/:postId', (req, res) => {
 
 // 게시물 삭제
 app.delete('/:id', (req, res) => {
-    const postId = parseInt(req.params.id, 10);
+    const postId = parseInt(req.params.id, 10); // 10은 10진수를 의미
     
     const query = 'DELETE FROM postInfo WHERE id = ?';
     db.query(query, [postId], (error, results) => {
@@ -233,3 +234,24 @@ app.delete('/:id', (req, res) => {
       res.status(200).json({ message: 'Post deleted successfully' });
     });
   });
+
+  // 게시물 수정
+  app.put('/:id', (req, res) => {
+
+    const postId = parseInt(req.params.id, 10);
+    const postTitle = req.body.postTitle;
+    const postConstent = req.body.postContent;
+
+    console.log("데이터확인 ::" , postId, postTitle, postConstent);
+
+    const query = 'UPDATE postInfo SET postTitle =?, postContent =? WHERE id = ?';
+    db.query(query, [postTitle, postConstent, postId], (error, results) => {
+
+        if (error) {
+            return res.status(500).json({message : 'Error update post'});
+        }
+
+        res.status(200).json({message : 'Post updated successfully'});
+    
+    });
+      });
