@@ -12,7 +12,7 @@
 <br><br>
 
 # 📃 프로젝트 소개
-node.js, react, express를 사용하여 간단한 게시판 구현하기
+node.js, react, express를 사용하여 간단한 게시판 구현을 통한 학습하기
 
 
 <br><br>
