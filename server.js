@@ -222,9 +222,10 @@ app.get('/:id', (req, res) => {
 // 게시물 삭제
 app.delete('/:id', (req, res) => {
     const postId = parseInt(req.params.id, 10); // 10은 10진수를 의미
+    const userName = req.body.userName;
     
-    const query = 'DELETE FROM postInfo WHERE id = ?';
-    db.query(query, [postId], (error, results) => {
+    const query = 'DELETE FROM postInfo WHERE id = ? and postUserName = ?';
+    db.query(query, [postId, userName], (error, results) => {
       if (error) {
         return res.status(500).json({ message: 'Error deleting post' });
       }

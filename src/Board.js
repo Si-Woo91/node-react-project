@@ -153,11 +153,14 @@ function BoardDetail(props) {
 
   const handleDelete = async () => {
     try {
+      const sendData = {
+        userName : userName
+      }
+
       const response = await fetch(`http://localhost:3001/${postId}`, {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json'
-        }
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(sendData)
       });
 
       if (!response.ok) {
