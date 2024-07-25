@@ -33,26 +33,25 @@ function BoardList(props) {
   return (
     <div style={{ padding: '20px' }}>
       <h1>게시판 목록</h1>
-      <p>
-        <a href="/logout">로그아웃</a>
-        <button onClick={() => { props.setMode("BOARDWRITE"); }}>글작성</button>
-      </p>
+      <div className='writeBtn'>
+        <button onClick={() => { props.setMode("BOARDWRITE"); }} >작성하기</button>
+      </div>
       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead>
           <tr>
-            <th style={{ border: '1px solid #ddd', padding: '8px' }}>글번호</th>
-            <th style={{ border: '1px solid #ddd', padding: '8px' }}>글제목</th>
-            <th style={{ border: '1px solid #ddd', padding: '8px' }}>작성자</th>
-            <th style={{ border: '1px solid #ddd', padding: '8px' }}>작성일자</th>
+            <th style={{ border: '1px solid #ddd', width: '10%', padding: '8px'}}>글번호</th>
+            <th style={{ border: '1px solid #ddd', width: '50%', padding: '8px'}}>글제목</th>
+            <th style={{ border: '1px solid #ddd', width: '20%', padding: '8px'}}>작성자</th>
+            <th style={{ border: '1px solid #ddd', width: '20%', padding: '8px'}}>작성일자</th>
           </tr>
         </thead>
         <tbody>
           {posts.map((post) => (
             <tr key={post.id}>
-              <td style={{ border: '1px solid #ddd', padding: '8px' }}>{post.id}</td>
-              <td style={{ border: '1px solid #ddd', padding: '8px', cursor: 'pointer'}}onClick={() => handlePostClick(post.id)}>{post.postTitle}</td>
-              <td style={{ border: '1px solid #ddd', padding: '8px' }}>{post.postUserName}</td>
-              <td style={{ border: '1px solid #ddd', padding: '8px' }}>
+              <td style={{ border: '1px solid #ddd', width: '10%', padding: '8px'}}>{post.id}</td>
+              <td style={{ border: '1px solid #ddd', width: '50%', padding: '8px', cursor: 'pointer'}}onClick={() => handlePostClick(post.id)}>{post.postTitle}</td>
+              <td style={{ border: '1px solid #ddd', width: '20%', padding: '8px' }}>{post.postUserName}</td>
+              <td style={{ border: '1px solid #ddd', width: '20%', padding: '8px' }}>
                 {new Date(post.createdAt).toLocaleDateString()}
               </td>
             </tr>
@@ -70,21 +69,21 @@ function BoardWrite(props) {
   const [content, setContent] = useState('');
 
   return (
-    <div style={{ padding: '20px' }}>
-      <h1>글 작성</h1>
-      <div>
-        <label>작성자:</label>
+    <div className="board-write">
+      <h1>게시물 작성 하기</h1>
+      <div className="form-group">
+        <label>작성자</label>
         <input type="text" value={props.userName} readOnly />
       </div>
-      <div>
-        <label>제목:</label>
+      <div className="form-group">
+        <label>제목</label>
         <input type="text" onChange={event => setTitle(event.target.value)} required />
       </div>
-      <div>
-        <label>내용:</label>
+      <div className="form-group">
+        <label>내용</label>
         <textarea onChange={event => setContent(event.target.value)} required />
       </div>
-      <p>
+      <div className="form-actions">
         <input type="submit" value="작성" onClick={() => {
           const postData = {
             postUserId: props.userName,
@@ -111,19 +110,18 @@ function BoardWrite(props) {
               console.error('Error posting data:', error);
             });
         }} />
-      </p>
-      <p><button onClick={() => { props.setMode("BOARD"); }}>취소</button></p>
+        <button onClick={() => { props.setMode("BOARD"); }}>취소</button>
+      </div>
     </div>
   );
 }
 
 // 게시물 상세페이지
 function BoardDetail(props) {
-  const [content, setContent] = useState("");
-  const [post, setPost] = useState("");
+  const [post, setPost] = useState({});
   const postId = props.postId;
   const userName = props.userName;
-  const [isEditing, setIsEditing] = useState(false); // 수정모드 (true : 수정모드, false : 게시물 상세내용 모드)
+  const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editContent, setEditContent] = useState("");
 
@@ -131,7 +129,6 @@ function BoardDetail(props) {
     fetchPost();
   }, [postId]);
 
-  // 선택한 게시물 조회
   const fetchPost = async () => {
     try {
       const response = await fetch(`http://localhost:3001/${postId}`, {
@@ -146,7 +143,7 @@ function BoardDetail(props) {
       }
 
       const json = await response.json();
-      setPost(json); // 상태 업데이트
+      setPost(json);
       setEditTitle(json.postTitle);
       setEditContent(json.postContent);
     } catch (error) {
@@ -154,32 +151,27 @@ function BoardDetail(props) {
     }
   };
 
-  // 게시물 삭제 핸들러
   const handleDelete = async () => {
     try {
-      // 비동기 요청을 보내고 결과를 기다림
       const response = await fetch(`http://localhost:3001/${postId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json'
         }
       });
-  
-      // 응답이 성공적인지 확인
+
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }
-  
-      // JSON 응답을 처리
-      const data = await response.json();
+
+      await response.json();
       alert('게시물이 삭제되었습니다.');
-      props.setMode('BOARD'); // 삭제 후 목록 페이지로 돌아가기
+      props.setMode('BOARD');
     } catch (error) {
       console.error('Error deleting post:', error);
     }
   };
 
-  // 게시물 수정 핸들러
   const handleUpdate = async () => {
     try {
       const updatedPost = {
@@ -187,38 +179,35 @@ function BoardDetail(props) {
         postContent: editContent
       };
 
-      console.log(updatedPost);
       const response = await fetch(`http://localhost:3001/${postId}`, {
-        method : 'PUT',
-        headers : {'Content-Type' : 'application/json'},
-        body : JSON.stringify(updatedPost)
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedPost)
       });
 
-      if(!response.ok) {
+      if (!response.ok) {
         throw new Error('Network response was not ok');
       }
 
-      await fetchPost(); // 업데이트된 게시물 데이터를 가져와 UI를 새로 고침
-      setIsEditing(false); // 수정 모드 종료
+      await fetchPost();
+      setIsEditing(false);
       alert('게시물이 수정되었습니다.');
-    }
-    catch (error) {
+    } catch (error) {
       console.error('Error updating post:', error);
     }
   };
 
-  // 취소버튼 핸들러
-  const handleCancel = () =>{
+  const handleCancel = () => {
     setIsEditing(false);
     setEditTitle(post.postTitle);
     setEditContent(post.postContent);
-  }
+  };
 
   return (
-    <div style={{ padding: '20px' }}>
-      {isEditing ? (    // 삼항연산자로 게시물 상세내용 조회 인지 수정모드인지
+    <div className="board-detail">
+      {isEditing ? (
         <>
-          <div>
+          <div className="form-group">
             <label>글제목:</label>
             <input
               type="text"
@@ -226,28 +215,41 @@ function BoardDetail(props) {
               onChange={(e) => setEditTitle(e.target.value)}
             />
           </div>
-          <div>
+          <div className="form-group">
             <label>글내용:</label>
             <textarea
               value={editContent}
               onChange={(e) => setEditContent(e.target.value)}
             />
           </div>
-          <button onClick={handleUpdate}>수정완료</button>
-          <button onClick={handleCancel}>취소</button>
+          <div className="form-actions">
+            <button onClick={handleUpdate}>수정완료</button>
+            <button onClick={handleCancel}>취소</button>
+          </div>
         </>
       ) : (
         <>
-          <h1>글제목 : {post.postTitle}</h1>
-          <p>작성자 : {post.postUserName}</p>
-          <p>글내용 : {post.postContent}</p>
-          <button onClick={() => props.setMode('BOARD')}>목록으로</button>
-          {post.postUserName === userName && (
-            <>
-              <button onClick={() => setIsEditing(true)}>수정</button>
-              <button onClick={handleDelete}>삭제</button>
-            </>
-          )}
+          <div className="form-group">
+            <label>글제목:</label>
+            <input type="text" value={post.postTitle} readOnly />
+          </div>
+          <div className="form-group">
+            <label>작성자:</label>
+            <input type="text" value={post.postUserName} readOnly />
+          </div>
+          <div className="form-group">
+            <label>글내용:</label>
+            <textarea value={post.postContent} readOnly />
+          </div>
+          <div className="form-actions">
+            <button onClick={() => props.setMode('BOARD')}>목록으로</button>
+            {post.postUserName === userName && (
+              <>
+                <button onClick={handleDelete}>삭제</button>
+                <button onClick={() => setIsEditing(true)}>수정</button>
+              </>
+            )}
+          </div>
         </>
       )}
     </div>
@@ -271,6 +273,9 @@ function Board(props) {
 
   return (
     <div>
+      <header className="header">
+        <a href="/logout" className="logout-link">로그아웃</a>
+      </header>
       {content}
     </div>
   );
