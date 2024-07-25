@@ -6,9 +6,7 @@
 2. [기술스택](#-기술스택)
 3. [화면구성 및 기능](#%EF%B8%8F-화면구성-및-기능)
 4. [ERD](#%EF%B8%8F-erd)
-<!-- 
-4. [트러블 슈팅](#-트러블-슈팅)
--->
+5. [트러블 슈팅 및 새로 알게 된 내용](#-트러블 슈팅 및 새로 알게 된 내용)
 
 
 <br><br>
@@ -107,16 +105,135 @@ node.js, react, express를 사용하여 간단한 게시판 구현하기
 
 <img src="https://github.com/user-attachments/assets/ff458308-d448-4e06-be81-6175ff87c173" width="500"/>
 
-<br>
+<br><br>
+[목차🔺](#-목차)
+<br><br>
 
-<!-- 
-# ✅ 트러블 슈팅
 
+# ✅ 트러블 슈팅 및 새로 알게 된 내용
 
+<details>
+    <summary>'async'와 'await' 사용 이유</summary>
+    <br>
+
+```java
+  const handleUpdate = async () => {
+    try {
+      const updatedPost = {
+        postTitle: editTitle,
+        postContent: editContent
+      };
+
+      const response = await fetch(`http://localhost:3001/${postId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedPost)
+      });
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      await fetchPost();
+      setIsEditing(false);
+      alert('게시물이 수정되었습니다.');
+    } catch (error) {
+      console.error('Error updating post:', error);
+    }
+  };
+```
+
+    - **'async'와 'await' 사용 이유**
+    1. 비동기 요청 처리:
+    fetch와 같은 네트워크 요청 함수는 비동기로 작동하며, fetch 함수는 Promise(어떤 작업에 관한 '상태 정보'를 갖고 있는 객체) 객체를 반환한다. async 함수를 사용하면 await 키워드를 통해 Promise의 결과를 기다릴 수 있으며, 비동기 작업의 결과를 기다리면서도 코드의 흐름이 동기식처럼 보이게 작성할 수 있다.
+
+    2. 에러 처리:
+    async 함수 내에서 await를 사용하면, 비동기 작업이 실패할 경우 try...catch 문을 사용하여 에러를 쉽게 처리할 수 있고, 이때 비동기 작업이 성공하거나 실패하는 경우에 대한 처리를 보다 간단하게 만들어줄 수 있다.
+
+        </br></br>  
+</details>
+
+<details>
+    <summary>게시물 상세 페이지 진입시 DB에서 계속 조회되는 현상</summary>
+    <br>
+    
+- 변경 전
+
+```java
+function BoardDetail(props) {
+  const [content, setContent] = useState("");
+  const [post, setPost] = useState("");
+  const postId = props.postId;
+
+  
+    // 데이터 가져오기
+    fetch(http://localhost:3001/${postId}, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+    .then(res => {
+      if (!res.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return res.json();
+    })
+    .then(json => {
+      setPost(json); // 상태 업데이트
+    })
+    .catch(error => {
+      console.error('Error fetching post:', error);
+    });
+                        .
+                        .
+                        .
+```
+
+- 변경 후
+```java
+function BoardDetail(props) {
+  const [post, setPost] = useState({});
+  const postId = props.postId;
+  const userName = props.userName;
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editContent, setEditContent] = useState("");
+
+  useEffect(() => {
+    fetchPost();
+  }, [postId]);
+
+  const fetchPost = async () => {
+    try {
+      const response = await fetch(`http://localhost:3001/${postId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      const json = await response.json();
+      setPost(json);
+      setEditTitle(json.postTitle);
+      setEditContent(json.postContent);
+    } catch (error) {
+      console.error('Error fetching post:', error);
+    }
+  };
+                        .
+                        .
+                        .
+```
+- useEffect의 종속성 배열을 이용하여 데이터 fetching을 한 번만 수행
+- 게시물 상세 정보를 이미 로드한 경우 다시 로드하지 않도록 하기(postId가 기준)
 
 </details>
 
+
 <br><br>
 [목차🔺](#-목차)
-
--->
